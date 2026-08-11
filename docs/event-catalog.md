@@ -132,5 +132,8 @@ flowchart LR
 ## 구현 상태
 
 - 스캐폴드에는 이벤트 클래스와 발행 인프라(Outbox/Relay/RabbitMQ 어댑터)만 존재. 컨슈머는 미구현.
-- 컨슈머 구현 시 이 문서의 바인딩 표를 따르고, 처리 전후로 `InboxService` 를 호출한다.
+- 컨슈머 구현 시 이 문서의 바인딩 표를 따르고, 비즈니스 처리와 **같은 트랜잭션** 안에서
+  `InboxService.tryMarkProcessed` 를 먼저 호출한다 — false 면 이미 처리된 이벤트이므로 스킵 (create-first 멱등성).
+- 발행 실패가 `MAX_PUBLISH_ATTEMPTS`(5회)에 도달한 outbox 행은 데드레터로 간주되어 relay 조회에서
+  제외된다. `failureCount >= 5` 조회로 확인하고 수동 조치한다.
 - 컨슈머 어댑터는 amqplib 직접 구현 또는 `@golevelup/nestjs-rabbitmq`(`@RabbitSubscribe` 데코레이터) 중 선택 — 후자가 보일러플레이트가 적다.
