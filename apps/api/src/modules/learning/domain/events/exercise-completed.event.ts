@@ -1,17 +1,17 @@
 import { DomainEvent } from '../../../../shared/domain/domain-event';
 
-export class ExerciseCompletedEvent extends DomainEvent {
+export type ExerciseCompletedPayload = {
+  attemptId: string;
+  userId: string;
+  exerciseType: 'CLOZE' | 'READING' | 'VOCAB';
+  isCorrect: boolean | null;
+};
+
+export class ExerciseCompletedEvent extends DomainEvent<ExerciseCompletedPayload> {
   static readonly type = 'learning.exercise.completed';
   readonly eventType = ExerciseCompletedEvent.type;
 
-  constructor(
-    readonly payload: {
-      attemptId: string;
-      userId: string;
-      exerciseType: 'CLOZE' | 'READING' | 'VOCAB';
-      isCorrect: boolean | null;
-    },
-  ) {
+  constructor(readonly payload: ExerciseCompletedPayload) {
     super();
   }
 }

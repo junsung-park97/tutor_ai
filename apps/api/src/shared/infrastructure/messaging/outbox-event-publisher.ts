@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import type { DomainEvent } from '../../domain/domain-event';
+import type { Prisma } from '@prisma/client';
 import type { EventPublisherPort } from '../../application/ports/event-publisher.port';
+import type { DomainEvent } from '../../domain/domain-event';
+// DI 주입 클래스는 값 임포트여야 한다 — import type 은 design:paramtypes 메타데이터를 지운다
 import { PrismaService } from '../prisma/prisma.service';
 
 const toOutboxRow = (event: DomainEvent) => ({
   eventId: event.eventId,
   eventType: event.eventType,
   version: event.version,
+  // DomainEvent 의 TPayload extends JsonObject 제약이 JSON 안전성을 컴파일 타임에 보장한다
   payload: event.payload as Prisma.InputJsonValue,
   occurredAt: event.occurredAt,
 });
