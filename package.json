@@ -1,0 +1,22 @@
+{
+  "name": "ai-tutoring",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:api": "turbo dev --filter=@ai-tutoring/api",
+    "dev:web": "turbo dev --filter=@ai-tutoring/web",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "turbo": "^2.5.0"
+  }
+}
