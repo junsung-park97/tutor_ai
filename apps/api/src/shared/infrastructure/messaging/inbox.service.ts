@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+// DI 주입 클래스는 값 임포트여야 한다 — import type 은 design:paramtypes 메타데이터를 지운다
 import { PrismaService } from '../prisma/prisma.service';
 
 const UNIQUE_CONSTRAINT_VIOLATION = 'P2002';

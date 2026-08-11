@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import type { OutboxEvent } from '@prisma/client';
+// DI 주입 클래스는 값 임포트여야 한다 — import type 은 design:paramtypes 메타데이터를 지운다
 import { PrismaService } from '../prisma/prisma.service';
 import { RabbitMqPublisher } from './rabbitmq.publisher';
 
