@@ -1,5 +1,5 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
+import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
+import amqp, { type AmqpConnectionManager, type ChannelWrapper } from 'amqp-connection-manager';
 import type { Channel } from 'amqplib';
 import type { EventEnvelope } from '../../domain/event-envelope';
 import { DOMAIN_EVENTS_EXCHANGE } from './messaging.constants';
@@ -38,6 +38,11 @@ export class RabbitMqPublisher implements OnModuleInit, OnModuleDestroy {
     this.channel.on('error', (error: Error) => {
       this.logger.error(`RabbitMQ channel error: ${error.message}`);
     });
+  }
+
+  /** 헬스 프로브용 — 브로커 연결 상태 */
+  isConnected(): boolean {
+    return this.connection?.isConnected() ?? false;
   }
 
   /** routingKey = envelope.eventType (예: 'tutoring.conversation.ended') */
