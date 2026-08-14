@@ -3,6 +3,11 @@
 EDA · 헥사고날 · CQRS · 레포지토리 패턴 · FSD 학습 프로젝트.
 요구사항과 아키텍처 결정(ADR)은 [spec.md](./spec.md), 이벤트 목록은 [docs/event-catalog.md](./docs/event-catalog.md) 참고.
 
+아키텍처 다이어그램 (mermaid):
+[시스템 구성](./docs/architecture/system-overview.md) ·
+[통신 아키텍처](./docs/architecture/communication-architecture.md) ·
+[논리 아키텍처](./docs/architecture/logical-architecture.md)
+
 모노레포는 **pnpm workspace + Turborepo** 구성이다. `pnpm build` / `pnpm test` 는
 turbo 가 오케스트레이션하며 입력이 같으면 태스크 결과를 캐시에서 재생한다.
 turbo 는 git 기반으로 입력을 해싱하므로 git 저장소가 필요하다 (초기화 완료).
