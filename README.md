@@ -1,7 +1,12 @@
 # AI Tutoring
 
-EDA · 헥사고날 · CQRS · 레포지토리 패턴 · 아토믹 패턴 학습 프로젝트.
+EDA · 헥사고날 · CQRS · 레포지토리 패턴 · FSD 학습 프로젝트.
 요구사항과 아키텍처 결정(ADR)은 [spec.md](./spec.md), 이벤트 목록은 [docs/event-catalog.md](./docs/event-catalog.md) 참고.
+
+아키텍처 다이어그램 (mermaid):
+[시스템 구성](./docs/architecture/system-overview.md) ·
+[통신 아키텍처](./docs/architecture/communication-architecture.md) ·
+[논리 아키텍처](./docs/architecture/logical-architecture.md)
 
 모노레포는 **pnpm workspace + Turborepo** 구성이다. `pnpm build` / `pnpm test` 는
 turbo 가 오케스트레이션하며 입력이 같으면 태스크 결과를 캐시에서 재생한다.
@@ -29,13 +34,20 @@ apps/
 │       ├── shared/            # 공유 커널: DomainEvent, EventEnvelope, 포트, Outbox/Inbox, RabbitMQ 어댑터
 │       ├── modules/           # 바운디드 컨텍스트 (아래 참고)
 │       └── trpc/              # tRPC 라우터 (Nest DI 바깥, 웹이 타입만 임포트)
-└── web/   React + Vite
+└── web/   React + Vite — FSD (Feature-Sliced Design)
     └── src/
-        ├── components/        # 아토믹 패턴: atoms / molecules / organisms / templates
-        ├── pages/
-        ├── stores/            # Zustand
-        └── lib/               # tRPC 클라이언트, 유틸
+        ├── app/               # 앱 초기화: 프로바이더, 전역 스타일
+        ├── pages/             # 라우트 페이지 (슬라이스 예: pages/home)
+        ├── widgets/           # 자립적 UI 블록 (여러 feature/entity 조합)
+        ├── features/          # 사용자 인터랙션 (예: 마이크 녹음, 결제하기)
+        ├── entities/          # 비즈니스 엔티티 (membership, conversation ...)
+        └── shared/            # ui(Shadcn), api(tRPC 클라이언트), lib
 ```
+
+FSD 임포트 규칙: 상위 레이어만 하위 레이어를 임포트한다
+(app → pages → widgets → features → entities → shared).
+동일 레이어의 슬라이스끼리는 임포트 금지. 각 슬라이스는 `index.ts` public API 로만 노출.
+클라이언트 상태(Zustand)는 각 슬라이스의 `model/` 세그먼트에 둔다.
 
 ### 바운디드 컨텍스트 (apps/api/src/modules/)
 

@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── 유저 / 멤버십 ────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  nickname  String
+  createdAt DateTime @default(now())
+
+  memberships Membership[]
+  payments    Payment[]
+}
+
+enum MembershipPlan {
+  BASIC
+  PREMIUM
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+}
+
+model Membership {
+  id        String           @id @default(uuid())
+  userId    String
+  plan      MembershipPlan
+  status    MembershipStatus @default(ACTIVE)
+  startedAt DateTime         @default(now())
+  expiresAt DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+}
+
+// ── 결제 ────────────────────────────────────────────────────
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id              String         @id @default(uuid())
+  userId          String
+  plan            MembershipPlan
+  amountKrw       Int
+  status          PaymentStatus  @default(PENDING)
+  pgTransactionId String?        @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// ── 이벤트 인프라 (Outbox / Inbox) ──────────────────────────
+
+model OutboxEvent {
+  id           String    @id @default(uuid())
+  eventId      String    @unique
+  eventType    String
+  version      Int       @default(1)
+  payload      Json
+  occurredAt   DateTime
+  publishedAt  DateTime?
+  // 발행 실패 횟수. 한도 초과 시 relay 가 해당 행을 건너뛴다 (poison 메시지 격리)
+  failureCount Int       @default(0)
+
+  @@index([publishedAt, occurredAt])
+}
+
+// 컨슈머 멱등성(inbox 패턴): 같은 이벤트를 같은 컨슈머가 두 번 처리하지 않는다
+model ProcessedEvent {
+  id          String   @id @default(uuid())
+  eventId     String
+  consumer    String
+  processedAt DateTime @default(now())
+
+  @@unique([eventId, consumer])
+}
+
+// ── 대화 기록 ───────────────────────────────────────────────
+
+enum TurnRole {
+  USER
+  AI
+}
+
+model ConversationSession {
+  id        String    @id @default(uuid())
+  userId    String
+  startedAt DateTime
+  endedAt   DateTime?
+
+  turns ConversationTurn[]
+
+  @@index([userId, startedAt])
+}
+
+model ConversationTurn {
+  id        String   @id @default(uuid())
+  sessionId String
+  seq       Int
+  role      TurnRole
+  text      String
+  createdAt DateTime @default(now())
+
+  session ConversationSession @relation(fields: [sessionId], references: [id])
+
+  @@unique([sessionId, seq])
+}
+
+// ── 레벨 측정 (프리미엄) ─────────────────────────────────────
+
+enum AnalysisStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model LevelReport {
+  id          String         @id @default(uuid())
+  userId      String
+  sessionId   String
+  status      AnalysisStatus @default(PENDING)
+  level       String?
+  summary     String?
+  createdAt   DateTime       @default(now())
+  completedAt DateTime?
+
+  @@index([userId, createdAt])
+}
+
+// ── 학습 도메인 ─────────────────────────────────────────────
+
+enum ExerciseType {
+  CLOZE
+  READING
+  VOCAB
+}
+
+model ExerciseAttempt {
+  id          String       @id @default(uuid())
+  userId      String
+  type        ExerciseType
+  isCorrect   Boolean?
+  completedAt DateTime     @default(now())
+
+  @@index([userId, completedAt])
+}
+
+// ── 학습 분석 read model (projection) ───────────────────────
+
+model DailyLearningStat {
+  id              String   @id @default(uuid())
+  userId          String
+  date            DateTime @db.Date
+  speakingSeconds Int      @default(0)
+  turnCount       Int      @default(0)
+  exerciseCount   Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+// ── 게이미피케이션 ──────────────────────────────────────────
+
+model Streak {
+  userId        String    @id
+  currentDays   Int       @default(0)
+  lastStudiedOn DateTime? @db.Date
+  updatedAt     DateTime  @updatedAt
+}
+
+model Badge {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, code])
+}
+
+// ── 알림 ────────────────────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// ── 감사 로그 ───────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  eventId    String   @unique
+  eventType  String
+  occurredAt DateTime
+  payload    Json
+  recordedAt DateTime @default(now())
+
+  @@index([eventType, occurredAt])
+}
